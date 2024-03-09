@@ -7,16 +7,20 @@ const getDocs = asyncHandler(async (req, res) => {
   res.status(200).json(docs);
 });
 
-const setDocs = asyncHandler(async (req, res) => {
-  if (!req.body.question || !req.body.answer) {
+const addDoc = asyncHandler(async (req, res) => {
+  if (!req.body.question) {
     res.status(400);
-    throw new Error("Please add question and answer");
+    throw new Error("Please add question");
   }
 
   const doc = await Doc.create({
-    question: req.body.question,
-    answer: req.body.answer,
     createdBy: req.user.id,
+    question: req.body.question,
+    questionDesc: req.body.desc,
+    answer: req.body.answer,
+    assignedTo: req.body.assignedTo,
+    companyName: req.body.company,
+    properties: req.body.properties,
   });
 
   res.status(200).json(doc);
@@ -69,4 +73,4 @@ const deleteDoc = asyncHandler(async (req, res) => {
   res.status(200).json({ id: req.params.id });
 });
 
-module.exports = { getDocs, setDocs, updateDoc, deleteDoc };
+module.exports = { getDocs, addDoc, updateDoc, deleteDoc };

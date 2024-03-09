@@ -1,35 +1,26 @@
 import React, { useState, useEffect } from "react";
 import AuthHeader from "./components/AuthHeader";
 import QuestionList from "./components/QuestionList";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
+import { setQuestions } from "./slices/questionSlice";
 import { useNavigate } from "react-router-dom";
 import ActionBar from "./components/ActionBar";
+import { getQuestionsFromMongo } from "./assets/mongodbCrud";
 
 export default function Home() {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
   const jwt = useSelector((state) => state.user.value.token);
   const [docs, setDocs] = useState([]);
 
   useEffect(() => {
-    const getData = async () => {
-      try {
-        const response = await fetch(
-          `${process.env.REACT_APP_BASE_URL_DEV}api/v1/docs`,
-          {
-            headers: {
-              Authorization: `Bearer ${jwt}`,
-            },
-          }
-        );
-        const data = await response.json();
-        setDocs(data);
-      } catch (err) {
-        console.log(err);
-      }
-    };
-
-    getData();
-  }, [jwt]);
+    getQuestionsFromMongo(jwt)
+      .then((res) => {
+        setDocs(res);
+        dispatch(setQuestions(res));
+      })
+      .catch((err) => console.log(err));
+  }, [jwt, dispatch]);
 
   return jwt ? (
     <div>

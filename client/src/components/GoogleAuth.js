@@ -1,11 +1,10 @@
 import { GoogleLogin } from "@react-oauth/google";
 import axios from "axios";
-import { useDispatch, useSelector } from "react-redux";
+import { useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { login } from "../slices/userSlice";
 
 export default function GoogleAuth() {
-  const user = useSelector((state) => state.user.value);
   const dispatch = useDispatch();
 
   const navigate = useNavigate();
@@ -40,9 +39,8 @@ export default function GoogleAuth() {
           handleSuccessfulLogin(credentialResponse)
         }
         onError={(err) => handleFailedLogin(err)}
-
-        //   useOneTap
-        //   auto_select
+        useOneTap
+        auto_select
       />
     </div>
   );

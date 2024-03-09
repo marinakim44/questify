@@ -3,7 +3,6 @@ import AddNewCardModal from "./AddNewCardModal";
 
 export default function ActionButtons() {
   const [open, setOpen] = useState(false);
-
   const handleOpen = () => setOpen(!open);
 
   return (

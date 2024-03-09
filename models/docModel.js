@@ -7,17 +7,37 @@ const docSchema = new mongoose.Schema(
       required: true,
       ref: "User",
     },
+    updatedBy: {
+      type: String,
+      required: false,
+    },
     question: {
       type: String,
       required: [true, "Please add a question"],
     },
+    questionDesc: {
+      type: String,
+      required: false,
+    },
     answer: {
       type: String,
-      required: [true, "Please add an answer"],
+      required: false,
+    },
+    assignedTo: {
+      type: String,
+      required: false,
+    },
+    companyName: {
+      type: String,
+      required: false,
+    },
+    properties: {
+      type: Array,
+      required: false,
     },
   },
   {
-    timestamps: true,
+    timestamps: { createdAt: "created_at", updatedAt: "updated_at" },
   }
 );
 
