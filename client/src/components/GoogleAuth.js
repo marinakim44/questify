@@ -17,7 +17,6 @@ export default function GoogleAuth() {
         cred
       );
       if (response?.data?.payload) {
-        console.log(response.data);
         dispatch(login(response.data));
 
         navigate("/home");

@@ -1,10 +1,9 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect } from "react";
 import AuthHeader from "./components/AuthHeader";
-// import QuestionList from "./components/QuestionList";
-import Counter from "./components/Counter";
-import User from "./components/User";
+import QuestionList from "./components/QuestionList";
 import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
+import ActionBar from "./components/ActionBar";
 
 export default function Home() {
   const navigate = useNavigate();
@@ -23,7 +22,6 @@ export default function Home() {
           }
         );
         const data = await response.json();
-        console.log("data: ", data);
         setDocs(data);
       } catch (err) {
         console.log(err);
@@ -31,14 +29,15 @@ export default function Home() {
     };
 
     getData();
-  }, []);
+  }, [jwt]);
 
   return jwt ? (
     <div>
-      <AuthHeader />
-      <Counter />
-      <User />
-      {/* <QuestionList questions={docs} /> */}
+      <div className="sticky top-0">
+        <AuthHeader />
+        <ActionBar />
+      </div>
+      <QuestionList questions={docs} />
     </div>
   ) : (
     <div>

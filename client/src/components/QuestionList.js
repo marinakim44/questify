@@ -2,15 +2,43 @@
 
 export default function QuestionList({ questions }) {
   return (
-    <ul className="divide-y divide-gray-200">
-      {questions.map((q) => (
-        <li key={q._id} className="py-4 flex">
-          <div className="ml-3">
-            <p className="text-sm font-medium text-gray-900">{q.question}</p>
-            <p className="text-sm text-gray-500">{q.answer}</p>
-          </div>
-        </li>
-      ))}
-    </ul>
+    <div>
+      <table className="table-auto brder-collapse border border-slate-500">
+        <thead className="sticky top-40">
+          <tr>
+            <th className="border border-slate-500 py-3"></th>
+            {questions &&
+              questions.length > 0 &&
+              Object.keys(questions[0])
+                .filter((k) => ["question", "answer", "assignedTo"].includes(k))
+                .map((k, i) => (
+                  <th key={i} className="border border-slate-500 py-3">
+                    {k}
+                  </th>
+                ))}
+          </tr>
+        </thead>
+        <tbody>
+          {questions &&
+            questions.length > 0 &&
+            questions.map((q) => (
+              <tr key={q._id}>
+                <td className="px-10 py-1 border border-slate-500">
+                  <input type="checkbox" id={q._id} name={q._id} />
+                </td>
+                {Object.keys(q)
+                  .filter((k) =>
+                    ["question", "answer", "assignedTo"].includes(k)
+                  )
+                  .map((k, i) => (
+                    <td key={i} className="px-10 py-1 border border-slate-500">
+                      {q[k]}
+                    </td>
+                  ))}
+              </tr>
+            ))}
+        </tbody>
+      </table>
+    </div>
   );
 }
