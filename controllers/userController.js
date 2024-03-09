@@ -1,0 +1,43 @@
+const jwt = require("jsonwebtoken");
+const JWT_SECRET = process.env.JWT_SECRET;
+const { OAuth2Client } = require("google-auth-library");
+const client = new OAuth2Client();
+const User = require("../models/userModel");
+
+const registerUser = (req, res) => {
+  res.json({ message: "Register user" });
+};
+
+const loginUser = async (req, res) => {
+  const { credential, client_id } = req.body;
+
+  try {
+    const ticket = await client.verifyIdToken({
+      idToken: credential,
+      audience: client_id,
+    });
+    const payload = ticket.getPayload();
+
+    let user = await User.findOneAndUpdate(
+      { email: payload.email },
+      { email: payload.email, name: payload.name, img: payload.picture },
+      { upsert: true, new: true }
+    )
+      .then((user) => {
+        const token = jwt.sign({ user }, JWT_SECRET);
+        res
+          .status(200)
+          // .cookie("token", token, { http: true })
+          .json({ payload, token });
+      })
+      .catch((err) => console.log("error: ", err));
+  } catch (err) {
+    res.status(400).json(err);
+  }
+};
+
+const getUser = (req, res) => {
+  res.json({ message: "User data" });
+};
+
+module.exports = { registerUser, loginUser, getUser };
