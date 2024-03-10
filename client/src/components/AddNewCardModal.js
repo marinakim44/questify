@@ -1,57 +1,58 @@
-import { Dialog, DialogBody, DialogFooter } from "@material-tailwind/react";
-import AddNewCardForm from "./AddNewCardForm";
-import { useState } from "react";
-import { saveQuestionToMongo } from "../assets/mongodbCrud";
-import { useSelector, useDispatch } from "react-redux";
-import { addQuestion } from "../slices/questionSlice";
+import {
+  Dialog,
+  DialogBody,
+  DialogFooter,
+  Card,
+  Input,
+} from "@material-tailwind/react";
+import Select from "react-select";
+import makeAnimated from "react-select/animated";
 
-export default function AddNewCardModal({ open, handleOpen, add }) {
-  const dispatch = useDispatch();
-  const [newQuestion, setNewQuestion] = useState({
-    question: "",
-    desc: "",
-    answer: "",
-    assignedTo: "",
-    company: "",
-    properties: [],
-  });
+const textFields = [
+  {
+    label: "question",
+    name: "question",
+  },
+  {
+    label: "question description",
+    name: "desc",
+  },
+  {
+    label: "answer",
+    name: "answer",
+  },
+];
 
-  const jwt = useSelector((state) => state.user.value.token);
+const tags = [
+  {
+    key: "key 1",
+    value: "value 1",
+    label: "key1: value1",
+  },
+  {
+    key: "key 2",
+    value: "value 2",
+    label: "key2: value2",
+  },
+  {
+    key: "key 3",
+    value: "value 3",
+    label: "key3: value3",
+  },
+];
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setNewQuestion({ ...newQuestion, [name]: value });
-  };
+const animatedComponents = makeAnimated();
 
-  const handleChangeAssignTo = (e) => {
-    setNewQuestion({ ...newQuestion, assignedTo: e.label });
-  };
-
-  const handleChangeCompanyName = (e) => {
-    setNewQuestion({ ...newQuestion, company: e.label });
-  };
-
-  const handleChangeProperties = (e) => {
-    setNewQuestion({
-      ...newQuestion,
-      properties: e.map((x) => {
-        return {
-          key: x.label,
-          value: x.label,
-        };
-      }),
-    });
-  };
-
-  const saveQuestion = async () => {
-    console.log("Saving question...");
-    const saved = await saveQuestionToMongo(newQuestion, jwt);
-    console.log("saved new question with ID: ", saved._id);
-    handleOpen();
-    setNewQuestion({});
-    dispatch(addQuestion(saved));
-  };
-
+export default function AddNewCardModal({
+  open,
+  handleOpen,
+  handleClick,
+  handleChange,
+  handleChangeAssignTo,
+  handleChangeCompanyName,
+  handleChangeProperties,
+  newQuestion,
+}) {
   return (
     <Dialog
       open={open}
@@ -60,13 +61,58 @@ export default function AddNewCardModal({ open, handleOpen, add }) {
     >
       <h2 className="text-center font-bold text-lg mb-5">Add a new question</h2>
       <DialogBody>
-        <AddNewCardForm
-          newQuestion={newQuestion}
-          handleChange={handleChange}
-          handleChangeAssignTo={handleChangeAssignTo}
-          handleChangeCompanyName={handleChangeCompanyName}
-          handleChangeProperties={handleChangeProperties}
-        />
+        <Card color="transparent" shadow={false}>
+          <form className="mt-8 mb-2 w-full">
+            <div className="mb-1 flex flex-col gap-6">
+              {textFields.map((field, i) => (
+                <Input
+                  key={i}
+                  size="lg"
+                  placeholder={field.label}
+                  className=" !border-t-blue-gray-200 focus:!border-t-gray-900"
+                  labelProps={{
+                    className: "before:content-none after:content-none",
+                  }}
+                  name={field.name}
+                  value={newQuestion[field.name]}
+                  onChange={handleChange}
+                />
+              ))}
+
+              <Select
+                defaultValue={"value 1"}
+                components={animatedComponents}
+                placeholder="assign to"
+                options={[
+                  { label: "User 1" },
+                  { label: "User 2" },
+                  { label: "User 3" },
+                ]}
+                onChange={handleChangeAssignTo}
+              />
+
+              <Select
+                defaultValue={"value 1"}
+                placeholder="company name"
+                options={[
+                  { label: "Company 1" },
+                  { label: "Company 2" },
+                  { label: "Company 3" },
+                ]}
+                onChange={handleChangeCompanyName}
+              />
+              <Select
+                placeholder="properties"
+                isMulti
+                name="properties"
+                options={tags}
+                className="basic-multi-select"
+                classNamePrefix="select"
+                onChange={handleChangeProperties}
+              />
+            </div>
+          </form>
+        </Card>
       </DialogBody>
       <DialogFooter className="mt-10">
         <button
@@ -76,7 +122,7 @@ export default function AddNewCardModal({ open, handleOpen, add }) {
           Cancel
         </button>
         <button
-          onClick={saveQuestion}
+          onClick={handleClick}
           className="p-3 bg-green-500 text-white font-bold rounded w-1/5"
         >
           Save

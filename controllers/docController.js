@@ -52,23 +52,24 @@ const updateDoc = asyncHandler(async (req, res) => {
 });
 
 const deleteDoc = asyncHandler(async (req, res) => {
-  const doc = await Doc.findById(req.params.id);
+  // const doc = await Doc.findById(req.params.id);
 
-  if (!doc) {
-    res.status(400);
-    throw new Error("Document not found");
-  }
+  // if (!doc) {
+  //   res.status(400);
+  //   throw new Error("Document not found");
+  // }
 
-  if (!req.user) {
-    res.status(401);
-    throw new Error("User not found");
-  }
-  if (doc.createdBy.toString() !== req.user.id) {
-    res.status(401);
-    throw new Error("User not authorized");
-  }
-
-  await doc.remove();
+  // if (!req.user) {
+  //   res.status(401);
+  //   throw new Error("User not found");
+  // }
+  // if (doc.createdBy.toString() !== req.user.id) {
+  //   res.status(401);
+  //   throw new Error("User not authorized");
+  // }
+  console.log("deleting doc: ", req.params.id);
+  // await doc.remove();
+  await Doc.findByIdAndDelete(req.params.id);
 
   res.status(200).json({ id: req.params.id });
 });

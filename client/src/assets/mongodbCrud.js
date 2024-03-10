@@ -27,3 +27,18 @@ export const saveQuestionToMongo = async (question, jwt) => {
 
   return response.json();
 };
+
+export const deleteQuestionFromMongo = async (id, jwt) => {
+  const response = await fetch(
+    `${process.env.REACT_APP_BASE_URL_DEV}api/v1/docs/delete/${id}`,
+    {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${jwt}`,
+      },
+    }
+  );
+
+  return response.json();
+};
