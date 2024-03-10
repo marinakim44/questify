@@ -3,11 +3,18 @@ const mongoose = require("mongoose");
 const docSchema = new mongoose.Schema(
   {
     createdBy: {
-      type: mongoose.Schema.Types.ObjectId,
+      type: String,
       required: true,
-      ref: "User",
+    },
+    createdAt: {
+      type: Date || String,
+      required: true,
     },
     updatedBy: {
+      type: String,
+      required: false,
+    },
+    updatedAt: {
       type: String,
       required: false,
     },

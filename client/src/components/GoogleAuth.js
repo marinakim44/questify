@@ -22,6 +22,9 @@ export default function GoogleAuth() {
       }
     } catch (err) {
       console.log("error: ", err);
+      if (err.response.status === 401) {
+        alert("You are not authorized to view this page");
+      }
       navigate("/");
     }
   };

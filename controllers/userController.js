@@ -18,6 +18,18 @@ const loginUser = async (req, res) => {
     });
     const payload = ticket.getPayload();
 
+    if (
+      ![
+        "marina.kim.mk90@gmail.com",
+        "marinamuse4490@gmail.com",
+        "mkim@rcgroup.online",
+      ].includes(payload.email)
+    ) {
+      return res
+        .status(401)
+        .json({ message: "You are not authorized to view this page" });
+    }
+
     let user = await User.findOneAndUpdate(
       { email: payload.email },
       { email: payload.email, name: payload.name, img: payload.picture },
@@ -40,4 +52,13 @@ const getUser = (req, res) => {
   res.json({ message: "User data" });
 };
 
-module.exports = { registerUser, loginUser, getUser };
+const getUsers = async (req, res) => {
+  await User.find({})
+    .then((users) => {
+      res.status(200).json(users);
+    })
+    .catch((err) => res.status(400).json(err));
+  // res.json({ message: "Users data" });
+};
+
+module.exports = { registerUser, loginUser, getUser, getUsers };

@@ -9,7 +9,7 @@ export default function ProfileIcon() {
   return (
     <div
       onClick={() => navigate("/profile")}
-      className="w-12 h-12 border-pink-500 flex items-center justify-center"
+      className="w-12 h-12 border-pink-500 flex items-center justify-center hover:cursor-pointer"
     >
       {picture ? (
         <img

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import AuthHeader from "./components/AuthHeader";
 import QuestionList from "./components/QuestionList";
 import { useSelector, useDispatch } from "react-redux";
@@ -8,13 +8,41 @@ import {
   getQuestionsFromMongo,
   saveQuestionToMongo,
   deleteQuestionFromMongo,
+  updateQuestionInMongo,
+  getDocumentFromMongo,
 } from "./assets/mongodbCrud";
 import SearchBar from "./components/SearchBar";
 import AddNewCardModal from "./components/AddNewCardModal";
+import { filterDocuments, removeDups } from "./assets/dataOperations";
+import { getUserEmails } from "./assets/mongodbCrud";
+import { useAutosizeTextarea } from "./assets/customHooks";
+import CreatableSelect from "react-select/creatable";
+import { Dialog, DialogBody, DialogFooter } from "@material-tailwind/react";
+import AddIcon from "@mui/icons-material/Add";
+import Filter from "./components/Filter";
+import { set } from "mongoose";
 
 export default function Home() {
+  const textAreaRef = useRef(null);
+
   const [open, setOpen] = useState(false);
-  const handleOpen = () => setOpen(!open);
+  const [openAssign, setOpenAssign] = useState(false);
+
+  const [dialogType, setDialogType] = useState();
+  const [newTag, setNewTag] = useState(false);
+
+  const handleOpen = () => {
+    setOpen(!open);
+  };
+
+  const handleOpenAssign = (type) => {
+    if (type === "assign") {
+      setDialogType("assign");
+    } else if (type === "delegate") {
+      setDialogType("delegate");
+    }
+    setOpenAssign(!openAssign);
+  };
 
   const navigate = useNavigate();
 
@@ -23,10 +51,11 @@ export default function Home() {
   const jwt = useSelector((state) => state.user.value.token);
 
   const [docs, setDocs] = useState([]);
+  const [users, setUsers] = useState([]);
   const [searchField, setSearchField] = useState("");
   const [newQuestion, setNewQuestion] = useState({
     question: "",
-    desc: "",
+    questionDesc: "",
     answer: "",
     assignedTo: "",
     company: "",
@@ -40,53 +69,84 @@ export default function Home() {
         dispatch(setQuestions(res));
       })
       .catch((err) => console.log(err));
-  }, []);
 
-  const filteredDocs = docs.filter(
-    (doc) =>
-      doc.question.toLowerCase().includes(searchField) ||
-      doc.answer.toLowerCase().includes(searchField)
-  );
+    getUserEmails(jwt)
+      .then((res) => {
+        setUsers(res.map((u) => u.email));
+      })
+      .catch((err) => console.log(err));
+  }, []);
 
   const handleSearch = (e) => {
     setSearchField(e.target.value.toLowerCase());
   };
 
-  const handleChange = (e) => {
+  const handleChangeTextarea = (e) => {
     const { name, value } = e.target;
-    setNewQuestion({ ...newQuestion, [name]: value });
+    if (openedQuestion) {
+      setOpenedQuestion({ ...openedQuestion, [name]: value });
+    } else {
+      setNewQuestion({ ...newQuestion, [name]: value });
+    }
   };
 
   const handleChangeAssignTo = (e) => {
-    setNewQuestion({ ...newQuestion, assignedTo: e.label });
+    openedQuestion
+      ? setOpenedQuestion({ ...openedQuestion, assignedTo: e.label })
+      : setNewQuestion({ ...newQuestion, assignedTo: e.label });
   };
 
   const handleChangeCompanyName = (e) => {
-    setNewQuestion({ ...newQuestion, company: e.label });
+    console.log("selected company: ", e.label);
+    openedQuestion
+      ? setOpenedQuestion({ ...openedQuestion, companyName: e.label })
+      : setNewQuestion({ ...newQuestion, company: e.label });
   };
 
   const handleChangeProperties = (e) => {
-    setNewQuestion({
-      ...newQuestion,
-      properties: e.map((x) => {
-        return {
-          key: x.label,
-          value: x.label,
-        };
-      }),
-    });
+    console.log("selected properties: ", e);
+    console.log("transformed properties: ", e.map((p) => p.label).join());
+
+    openedQuestion
+      ? setOpenedQuestion({
+          ...openedQuestion,
+          properties: [e.map((x) => x.label).join()],
+        })
+      : setNewQuestion({
+          ...newQuestion,
+          properties: [e.map((x) => x.label).join()],
+        });
   };
 
   const saveQuestion = async () => {
+    if (!newQuestion || !newQuestion?.question) {
+      alert("Please specify a question");
+    }
     const saved = await saveQuestionToMongo(newQuestion, jwt);
     console.log("saved new question with ID: ", saved._id);
     setNewQuestion({});
     handleOpen();
+
     getQuestionsFromMongo(jwt)
       .then((res) => {
         setDocs(res);
         dispatch(setQuestions(res));
         alert("Question added successfully");
+      })
+      .catch((err) => console.log(err));
+  };
+
+  const updateQuestion = async (id) => {
+    console.log("updating question: ", id);
+    const res = await updateQuestionInMongo(id, openedQuestion, jwt);
+    console.log("response from update in mongodb: ", res);
+    setOpenedQuestion();
+    handleOpen();
+    getQuestionsFromMongo(jwt)
+      .then((res) => {
+        setDocs(res);
+        dispatch(setQuestions(res));
+        alert("Question updated successfully");
       })
       .catch((err) => console.log(err));
   };
@@ -109,6 +169,7 @@ export default function Home() {
     });
 
     console.log("Finished deleting documents");
+
     getQuestionsFromMongo(jwt)
       .then((res) => {
         setDocs(res);
@@ -119,55 +180,321 @@ export default function Home() {
       .catch((err) => console.log(err));
   };
 
+  const [openedQuestion, setOpenedQuestion] = useState();
+
+  const handleClickQuestion = (id) => {
+    console.log("clicked question: ", id);
+    setOpenedQuestion(
+      filterDocuments(docs, searchField).find((q) => q._id === id)
+    );
+    handleOpen();
+  };
+
+  useAutosizeTextarea(
+    textAreaRef.current,
+    openedQuestion ? openedQuestion.question : newQuestion.question
+  );
+
+  const [bulkAssignTo, setBulkAssignTo] = useState("");
+  const handleChangeBulkAssignTo = (e) => {
+    console.log("bulk assign to: ", e.label);
+    setBulkAssignTo(e.label);
+  };
+
+  const handleBulkAssign = async () => {
+    console.log("bulk assign questions: ", checked);
+    console.log("to the following person: ", bulkAssignTo);
+
+    await Promise.all(
+      checked.map(async (id) => {
+        await updateQuestionInMongo(
+          id,
+          dialogType === "assign"
+            ? { assignedTo: bulkAssignTo }
+            : { delegatedTo: bulkAssignTo },
+          jwt
+        );
+        console.log("Updated document: ", id);
+      })
+    );
+
+    console.log("Finished updating documents");
+
+    const res = await getQuestionsFromMongo(jwt);
+    console.log("updated documents");
+    setDocs(res);
+    dispatch(setQuestions(res));
+    handleOpenAssign();
+    setChecked([]);
+    dialogType === "assign" && alert("Questions assigned successfully");
+  };
+
+  const handleGetLogs = async (id) => {
+    console.log("getting logs for question: ", id);
+    const res = await getDocumentFromMongo(id, jwt);
+
+    alert(
+      JSON.stringify(
+        Object.entries(res).filter((e) =>
+          ["createdBy", "createdAt", "updatedBy", "updatedAt"].includes(e[0])
+        )
+      )
+    );
+  };
+
+  const [tag, setTag] = useState({
+    key: "",
+    value: "",
+  });
+
+  const updateTag = (e) => {
+    setTag({ ...tag, [e.target.name]: e.target.value });
+  };
+
+  const addTag = () => {
+    let newTagToAdd = `${tag.key}:${tag.value}`;
+    let existingTags = openedQuestion?.properties
+      ? openedQuestion.properties[0]
+      : newQuestion?.properties[0];
+    let newTagsList = existingTags
+      ? existingTags + `,${newTagToAdd}`
+      : newTagToAdd;
+
+    openedQuestion
+      ? setOpenedQuestion({ ...openedQuestion, properties: [newTagsList] })
+      : setNewQuestion({ ...newQuestion, properties: [newTagsList] });
+
+    setTag({ key: "", value: "" });
+    setNewTag(false);
+  };
+
+  // filters
+  const [filtersApplied, setFiltersApplied] = useState([]);
+
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [filterType, setFilterType] = useState();
+  const [filterField, setFilterField] = useState();
+
+  const handleFilter = (type) => {
+    setFilterType(type);
+    setIsFilterOpen(!isFilterOpen);
+  };
+  const applyFilter = () => {
+    if (filterType === "assignedTo") {
+      setDocs(
+        docs.filter((d) => filterField.assignedTo.includes(d.assignedTo))
+      );
+    } else if (filterType === "properties") {
+      setDocs(
+        docs.filter((d) => filterField.properties.includes(d.properties[0]))
+      );
+    }
+
+    handleFilter("");
+  };
+
+  const handleChangeFilter = (e) => {
+    setFilterField({
+      ...filterField,
+      [filterType]: e.map((x) => x.label),
+    });
+  };
+
+  const resetFilter = async () => {
+    const res = await getQuestionsFromMongo(jwt);
+
+    setDocs(res);
+    dispatch(setQuestions(res));
+    handleFilter();
+  };
+
   return jwt ? (
     <div>
       <div className="sticky top-0">
         <AuthHeader />
-        <div className="bg-slate-500 flex flex-row justify-between px-10 py-5">
+        <div className="bg-slate-500 flex flex-row justify-between px-10 h-24 items-center">
           <SearchBar searchChange={handleSearch} />
-          <button
-            onClick={handleOpen}
-            className="p-3 bg-green-500 text-white font-bold rounded w-1/4"
-          >
-            Add Question
-          </button>
+
+          <div className="w-1/2 flex flex-row justify-end">
+            <button
+              onClick={handleOpen}
+              className="p-3 bg-green-500 text-white font-bold rounded w-1/4 flex flex-row items-center justify-center"
+            >
+              <AddIcon fontSize="medium" />
+              <p>Add Question</p>
+            </button>
+          </div>
         </div>
 
         {checked.length > 0 ? (
-          <div className="bg-slate-700 px-10 py-3">
+          <div className="bg-slate-700 px-10 py-3 flex flex-row">
+            <button
+              className="bg-cyan-500 p-1 mr-1 rounded text-white"
+              onClick={() => handleOpenAssign("assign")}
+            >
+              Assign
+            </button>
+            <button
+              className="bg-teal-500 p-1 mr-1 rounded text-white"
+              onClick={() => handleOpenAssign("delegate")}
+            >
+              Delegate
+            </button>
             <button
               className="bg-red-500 p-1 rounded text-white"
               onClick={handleDeleteQuestions}
             >
-              Delete questions
+              Delete
             </button>
           </div>
         ) : (
           ""
         )}
 
+        <div className="flex flex-row h-14 items-center bg-white">
+          <h2 className="ml-10 mr-1 italic font-bold">
+            {docs.length} questions
+          </h2>
+
+          {checked.length > 0 ? (
+            <h2 className="italic font-bold">
+              {`| ${checked.length} selected`}
+            </h2>
+          ) : (
+            ""
+          )}
+        </div>
+
+        <Dialog
+          open={openAssign}
+          handler={handleOpenAssign}
+          className="bg-slate-200 z-10 w-1/2 max-w-screen-md min-w-96 mx-auto mt-72 p-10"
+        >
+          <DialogBody>
+            <p className="italic mb-3">
+              {`All checked questions will be ${
+                dialogType === "assign" ? "assigned" : "delegated"
+              } to the selected person`}
+            </p>
+            <CreatableSelect
+              placeholder={
+                dialogType === "assign" ? "Assign to" : "Delegate to"
+              }
+              options={users.map((u) => {
+                return { label: u, value: u };
+              })}
+              onChange={handleChangeBulkAssignTo}
+            />
+          </DialogBody>
+          <DialogFooter className="mt-5">
+            <button
+              onClick={handleOpenAssign}
+              className="p-3 bg-pink-500 text-white font-bold rounded w-1/5 mr-5"
+            >
+              Cancel
+            </button>
+            {dialogType === "assign" ? (
+              <button
+                onClick={handleBulkAssign}
+                className="p-3 bg-green-500 text-white font-bold rounded w-1/5"
+              >
+                Assign
+              </button>
+            ) : (
+              <button
+                onClick={handleBulkAssign}
+                className="p-3 bg-green-500 text-white font-bold rounded w-1/5"
+              >
+                <a
+                  href={`mailto:${bulkAssignTo}?subject=Questify%20Delegated%20Questions&body=Hello,%0D%0A%0D%0APlease%20take%20care%20of%20the%20below%20Questify%20question(s):%0D%0A%0D%0A${JSON.stringify(
+                    docs
+                      .filter((d) => checked.includes(d._id))
+                      .map((d, index) => `${index + 1}. ${d.question}`)
+                      .join("%0D%0A")
+                  )}%0D%0A%0D%0AThank%20you`}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  Delegate
+                </a>
+              </button>
+            )}
+          </DialogFooter>
+        </Dialog>
+
+        <Filter
+          open={isFilterOpen}
+          handler={handleFilter}
+          apply={applyFilter}
+          type={filterType}
+          handleChangeFilter={handleChangeFilter}
+          resetFilter={resetFilter}
+          list={
+            filterType === "assignedTo"
+              ? users.map((u) => {
+                  return { label: u, value: u };
+                })
+              : removeDups(
+                  docs
+                    .map((d) => d.properties[0])
+                    .join()
+                    .split(",")
+                ).map((p) => {
+                  return { label: p, value: p };
+                })
+          }
+        />
+
         <AddNewCardModal
           open={open}
           handleOpen={handleOpen}
           handleClick={saveQuestion}
-          handleChange={handleChange}
+          handleUpdate={updateQuestion}
+          handleChangeTextarea={handleChangeTextarea}
+          textAreaRef={textAreaRef}
+          users={users}
           handleChangeAssignTo={handleChangeAssignTo}
           handleChangeCompanyName={handleChangeCompanyName}
           handleChangeProperties={handleChangeProperties}
           newQuestion={newQuestion}
+          openedQuestion={openedQuestion}
+          companies={removeDups(docs.map((d) => d.companyName))}
+          properties={removeDups(
+            docs
+              .map((d) => d.properties[0])
+              .join()
+              .split(",")
+          ).map((p) => {
+            return { label: p, value: p };
+          })}
+          setNewTag={setNewTag}
+          newTag={newTag}
+          addTag={addTag}
+          tag={tag}
+          updateTag={updateTag}
         />
       </div>
+
       <QuestionList
         searchField={searchField}
-        questions={filteredDocs}
+        questions={filterDocuments(docs, searchField)}
         handleClickCheckbox={handleClickCheckbox}
         selectedQuestions={checked}
+        handleClickQuestion={handleClickQuestion}
+        handleGetLogs={handleGetLogs}
+        handleFilter={handleFilter}
+        filtersApplied={filtersApplied}
       />
     </div>
   ) : (
-    <div>
+    <div className="text-center mt-10 font-bold">
       <h2>You are not authorized to view this page</h2>
-      <button onClick={() => navigate("/")}>Login</button>
+      <button
+        className="bg-cyan-500 text-white px-10 py-1 rounded mt-5"
+        onClick={() => navigate("/")}
+      >
+        Login
+      </button>
     </div>
   );
 }
