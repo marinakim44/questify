@@ -74,4 +74,39 @@ const deleteDoc = asyncHandler(async (req, res) => {
   res.status(200).json({ id: req.params.id });
 });
 
-module.exports = { getDocs, getDoc, addDoc, updateDoc, deleteDoc };
+const getResults = asyncHandler(async (req, res) => {
+  console.log("searching for: ", req.params.value);
+  // const docs = await Doc.find({
+  //   $or: [
+  //     { question: { $regex: req.params.value, $options: "i" } },
+  //     { questionDesc: { $regex: req.params.value, $options: "i" } },
+  //     { answer: { $regex: req.params.value, $options: "i" } },
+  //   ],
+  // });
+
+  const docs = await Doc.find({
+    $search: {
+      index: "default",
+      text: {
+        query: req.params.value,
+        path: ["question", "questionDesc", "answer"],
+        fuzzy: {
+          maxEdits: 2,
+          maxExpansions: 100,
+          prefixLength: 2,
+        },
+        score: {
+          boost: {
+            value: 2,
+          },
+        },
+      },
+    },
+  });
+
+  console.log("docs: ", docs);
+
+  // res.status(200).json(docs.map((d) => d._id));
+});
+
+module.exports = { getDocs, getDoc, addDoc, updateDoc, deleteDoc, getResults };

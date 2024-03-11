@@ -85,3 +85,17 @@ export const getUserEmails = async (jwt) => {
 
   return response.json();
 };
+
+export const getFuzzyResults = async (searchValue, jwt) => {
+  console.log("getting fuzzy results");
+  const response = await fetch(
+    `${process.env.REACT_APP_BASE_URL_DEV}api/v1/docs/search/${searchValue}`,
+    {
+      headers: {
+        Authorization: `Bearer ${jwt}`,
+      },
+    }
+  );
+
+  return response.json();
+};

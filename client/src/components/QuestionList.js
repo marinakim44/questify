@@ -1,5 +1,6 @@
 import Highlighter from "react-highlight-words";
 import FilterListIcon from "@mui/icons-material/FilterList";
+import UpdateIcon from "@mui/icons-material/Update";
 
 export default function QuestionList({
   searchField,
@@ -37,7 +38,7 @@ export default function QuestionList({
                       ? () => handleFilter("properties")
                       : k === "assignedTo"
                       ? () => handleFilter("assignedTo")
-                      : ""
+                      : () => console.log("no filter")
                   }
                 >
                   <div className="flex flwx-row justify-center">
@@ -73,7 +74,7 @@ export default function QuestionList({
                 </td>
 
                 <td className="px-5 py-1 border border-slate-300 cursor-pointer">
-                  <div className="flex flex-col">
+                  <div className="flex flex-row justify-between">
                     <Highlighter
                       highlightClassName="highlighted-text"
                       searchWords={[searchField]}
@@ -81,12 +82,10 @@ export default function QuestionList({
                       textToHighlight={q["question"]}
                       onClick={() => handleClickQuestion(q._id)}
                     />
-                    <button
-                      className="bg-slate-300 w-1/2 mt-1"
+                    <UpdateIcon
                       onClick={() => handleGetLogs(q._id)}
-                    >
-                      View logs
-                    </button>
+                      className="text-slate-200"
+                    />
                   </div>
                 </td>
                 <td

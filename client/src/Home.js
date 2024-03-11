@@ -13,14 +13,14 @@ import {
 } from "./assets/mongodbCrud";
 import SearchBar from "./components/SearchBar";
 import AddNewCardModal from "./components/AddNewCardModal";
-import { filterDocuments, removeDups } from "./assets/dataOperations";
-import { getUserEmails } from "./assets/mongodbCrud";
+import { removeDups } from "./assets/dataOperations";
+import { getUserEmails, getFuzzyResults } from "./assets/mongodbCrud";
+import { getSearchResults } from "./assets/searchEngine";
 import { useAutosizeTextarea } from "./assets/customHooks";
 import CreatableSelect from "react-select/creatable";
 import { Dialog, DialogBody, DialogFooter } from "@material-tailwind/react";
 import AddIcon from "@mui/icons-material/Add";
 import Filter from "./components/Filter";
-import { set } from "mongoose";
 
 export default function Home() {
   const textAreaRef = useRef(null);
@@ -184,9 +184,7 @@ export default function Home() {
 
   const handleClickQuestion = (id) => {
     console.log("clicked question: ", id);
-    setOpenedQuestion(
-      filterDocuments(docs, searchField).find((q) => q._id === id)
-    );
+    setOpenedQuestion(docs.find((q) => q._id === id));
     handleOpen();
   };
 
@@ -306,6 +304,30 @@ export default function Home() {
     setDocs(res);
     dispatch(setQuestions(res));
     handleFilter();
+    setFiltersApplied([]);
+  };
+
+  const getFuzzySearchResults = () => {
+    const res = getSearchResults(docs, searchField);
+    console.log("search res: ", res);
+    // const res = await getFuzzyResults(searchField, jwt);
+    // console.log(
+    //   "show docs: ",
+    //   docs.filter((d) => res.includes(d._id))
+    // );
+
+    setDocs(res.map((r) => r.item));
+    // dispatch(docs.filter((d) => res.includes(d._id)));
+  };
+
+  const resetResults = () => {
+    setSearchField("");
+    getQuestionsFromMongo(jwt)
+      .then((res) => {
+        setDocs(res);
+        dispatch(setQuestions(res));
+      })
+      .catch((err) => console.log(err));
   };
 
   return jwt ? (
@@ -313,7 +335,12 @@ export default function Home() {
       <div className="sticky top-0">
         <AuthHeader />
         <div className="bg-slate-500 flex flex-row justify-between px-10 h-24 items-center">
-          <SearchBar searchChange={handleSearch} />
+          <SearchBar
+            searchChange={handleSearch}
+            searchValue={searchField}
+            clear={resetResults}
+            fuzzySearch={getFuzzySearchResults}
+          />
 
           <div className="w-1/2 flex flex-row justify-end">
             <button
@@ -357,9 +384,14 @@ export default function Home() {
           </h2>
 
           {checked.length > 0 ? (
-            <h2 className="italic font-bold">
-              {`| ${checked.length} selected`}
-            </h2>
+            <div className="flex flex-row">
+              <h2 className="italic font-bold">
+                {`| ${checked.length} selected |`}&nbsp;
+              </h2>
+              <button onClick={() => setChecked([])}>
+                <h2 className="italic underline text-slate-500">Cancel</h2>
+              </button>
+            </div>
           ) : (
             ""
           )}
@@ -477,7 +509,8 @@ export default function Home() {
 
       <QuestionList
         searchField={searchField}
-        questions={filterDocuments(docs, searchField)}
+        // questions={filterDocuments(docs, searchField)}
+        questions={docs}
         handleClickCheckbox={handleClickCheckbox}
         selectedQuestions={checked}
         handleClickQuestion={handleClickQuestion}
