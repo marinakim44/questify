@@ -57,7 +57,7 @@ export default function AddNewCardModal({
                   id="question"
                   onChange={handleChangeTextarea}
                   placeholder="Specify a question"
-                  ref={textAreaRef}
+                  // ref={textAreaRef}
                   rows={1}
                   value={
                     openedQuestion
@@ -81,7 +81,7 @@ export default function AddNewCardModal({
                   id="questionDesc"
                   onChange={handleChangeTextarea}
                   placeholder="Question description"
-                  ref={textAreaRef}
+                  // ref={textAreaRef}
                   rows={1}
                   value={
                     openedQuestion
@@ -124,6 +124,7 @@ export default function AddNewCardModal({
                 )}
                 <Select
                   components={animatedComponents}
+                  isClearable
                   id="assignto"
                   placeholder="Assign to"
                   value={
@@ -160,6 +161,7 @@ export default function AddNewCardModal({
                 <CreatableSelect
                   placeholder="Company name"
                   id="companyname"
+                  isClearable
                   value={
                     openedQuestion?.companyName
                       ? {

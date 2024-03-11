@@ -4,8 +4,8 @@ import { useNavigate } from "react-router-dom";
 
 export default function ProfileIcon() {
   const navigate = useNavigate();
-
   const { email, picture } = useSelector((state) => state.user.value.payload);
+
   return (
     <div
       onClick={() => navigate("/profile")}

@@ -43,7 +43,6 @@ export default function GoogleAuth() {
         }
         onError={(err) => handleFailedLogin(err)}
         useOneTap
-        auto_select
       />
     </div>
   );

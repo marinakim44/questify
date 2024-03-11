@@ -11,7 +11,6 @@ export default function Filter({
   type,
   list,
   handleChangeFilter,
-  resetFilter,
 }) {
   return (
     <Dialog
@@ -25,15 +24,11 @@ export default function Filter({
         </p>
         <Select
           components={animatedComponents}
-          isMulti
           id={type}
           placeholder={`Select ${type}`}
           options={list}
           onChange={handleChangeFilter}
         />
-        <button onClick={resetFilter}>
-          <p className="italic text-slate-500 underline mt-3">Reset filter</p>
-        </button>
       </DialogBody>
       <DialogFooter className="mt-5">
         <button

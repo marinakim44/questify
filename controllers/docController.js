@@ -1,4 +1,9 @@
+require("dotenv").config();
+const axios = require("axios");
 const asyncHandler = require("express-async-handler");
+const OPENAI_KEY = process.env.OPENAI_KEY;
+const MONGODB_URI = process.env.MONGODB_URI;
+const MongoClient = require("mongodb").MongoClient;
 
 const Doc = require("../models/docModel");
 
@@ -9,7 +14,6 @@ const getDocs = asyncHandler(async (req, res) => {
 
 const getDoc = asyncHandler(async (req, res) => {
   const doc = await Doc.findById(req.params.id);
-  console.log("doc: ", doc);
 
   if (!doc) {
     res.status(400);
@@ -20,7 +24,6 @@ const getDoc = asyncHandler(async (req, res) => {
 });
 
 const addDoc = asyncHandler(async (req, res) => {
-  console.log("adding new doc: ", req.body);
   if (!req.body.question) {
     res.status(400);
     throw new Error("Please add question");
@@ -41,9 +44,6 @@ const addDoc = asyncHandler(async (req, res) => {
 });
 
 const updateDoc = asyncHandler(async (req, res) => {
-  console.log("req user: ", req.user);
-  // const doc = await Doc.findById(req.params.id);
-  console.log(req.body);
   const doc = await Doc.findByIdAndUpdate(
     req.params.id,
     Object.assign({}, req.body, {
@@ -56,8 +56,6 @@ const updateDoc = asyncHandler(async (req, res) => {
     }
   );
 
-  console.log("updated doc: ", doc);
-
   if (!doc) {
     res.status(400);
     throw new Error("Document not found");
@@ -67,46 +65,126 @@ const updateDoc = asyncHandler(async (req, res) => {
 });
 
 const deleteDoc = asyncHandler(async (req, res) => {
-  console.log("deleting doc: ", req.params.id);
   // await doc.remove();
   await Doc.findByIdAndDelete(req.params.id);
 
   res.status(200).json({ id: req.params.id });
 });
 
-const getResults = asyncHandler(async (req, res) => {
-  console.log("searching for: ", req.params.value);
-  // const docs = await Doc.find({
-  //   $or: [
-  //     { question: { $regex: req.params.value, $options: "i" } },
-  //     { questionDesc: { $regex: req.params.value, $options: "i" } },
-  //     { answer: { $regex: req.params.value, $options: "i" } },
-  //   ],
-  // });
+async function getEmbedding(query) {
+  const url = "https://api.openai.com/v1/embeddings";
+  // const openai_key = "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";
 
-  const docs = await Doc.find({
-    $search: {
-      index: "default",
-      text: {
-        query: req.params.value,
-        path: ["question", "questionDesc", "answer"],
-        fuzzy: {
-          maxEdits: 2,
-          maxExpansions: 100,
-          prefixLength: 2,
+  let response = await axios.post(
+    url,
+    {
+      input: query,
+      model: "text-embedding-ada-002",
+    },
+    {
+      headers: {
+        Authorization: `Bearer ${OPENAI_KEY}`,
+        "Content-Type": "application/json",
+      },
+    }
+  );
+
+  if (response.status === 200) {
+    return response.data.data[0].embedding;
+  } else {
+    throw new Error("Failed to get embedding. Status code: " + response.status);
+  }
+}
+
+async function findSimilarDocuments(embedding) {
+  // const url =
+  //   "mongodb+srv://marinakim44:ILbOlsHyCzaibioD@questify-mk-cluster.vuyg1jf.mongodb.net/questify-ai-db";
+
+  const client = new MongoClient(MONGODB_URI);
+  try {
+    await client.connect();
+    const db = client.db("questify-ai-db"); // Replace with your database name.
+    const collection = db.collection("docs");
+
+    const documents = await collection
+      .aggregate([
+        {
+          $vectorSearch: {
+            queryVector: embedding,
+            path: "embedding",
+            numCandidates: 100,
+            limit: 5,
+            index: "questifyIndex",
+          },
         },
-        score: {
-          boost: {
-            value: 2,
+      ])
+      .toArray();
+
+    return documents;
+  } catch (err) {
+    console.error(err);
+  }
+}
+
+async function main(query) {
+  try {
+    const embedding = await getEmbedding(query);
+    const documents = await findSimilarDocuments(embedding);
+
+    return documents;
+  } catch (err) {
+    console.error(err);
+  }
+}
+
+const getSemanticResults = asyncHandler(async (req, res) => {
+  const query = req.body.searchValue;
+
+  const foundDocuments = await main(query);
+  console.log("found documents: ", foundDocuments);
+
+  if (!foundDocuments) {
+    res.status(400);
+    throw new Error(
+      "No documents found, probably openai api limit reached. Try again later"
+    );
+  }
+
+  res.status(200).json(foundDocuments);
+});
+
+const getFuzzyResults = asyncHandler(async (req, res) => {
+  const query = req.body.searchValue;
+
+  const foundDocuments = await Doc.aggregate([
+    {
+      $search: {
+        index: "questifyFuzzyIndex",
+        text: {
+          query: query,
+          path: ["question", "questionDesc", "answer"],
+          fuzzy: {
+            prefixLength: 2,
           },
         },
       },
     },
-  });
+  ]);
 
-  console.log("docs: ", docs);
+  if (!foundDocuments) {
+    res.status(400);
+    throw new Error("No documents found");
+  }
 
-  // res.status(200).json(docs.map((d) => d._id));
+  res.status(200).json(foundDocuments);
 });
 
-module.exports = { getDocs, getDoc, addDoc, updateDoc, deleteDoc, getResults };
+module.exports = {
+  getDocs,
+  getDoc,
+  addDoc,
+  updateDoc,
+  deleteDoc,
+  getSemanticResults,
+  getFuzzyResults,
+};

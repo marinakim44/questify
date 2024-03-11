@@ -42,6 +42,10 @@ const docSchema = new mongoose.Schema(
       type: Array,
       required: false,
     },
+    status: {
+      type: String,
+      required: false,
+    },
   },
   {
     timestamps: { createdAt: "created_at", updatedAt: "updated_at" },

@@ -7,7 +7,7 @@ export default function QuestionList({
   questions,
   handleClickCheckbox,
   selectedQuestions,
-  handleClickQuestion,
+  handleOpenQuestion,
   handleGetLogs,
   handleFilter,
   filtersApplied,
@@ -16,9 +16,11 @@ export default function QuestionList({
     <div>
       <table className="mx-10 table-auto brder-collapse border border-slate-500 hover:border-collapse">
         <thead
-          className={`sticky ${
-            selectedQuestions.length > 0 ? "top-72" : "top-56"
-          } bg-slate-300`}
+          className="bg-slate-300"
+          style={{
+            position: "sticky",
+            top: selectedQuestions.length > 0 ? "340px" : "280px",
+          }}
         >
           <tr>
             <th className="border border-slate-300 py-3"></th>
@@ -36,9 +38,7 @@ export default function QuestionList({
                   onClick={
                     k === "properties"
                       ? () => handleFilter("properties")
-                      : k === "assignedTo"
-                      ? () => handleFilter("assignedTo")
-                      : () => console.log("no filter")
+                      : () => handleFilter("assignedTo")
                   }
                 >
                   <div className="flex flwx-row justify-center">
@@ -79,8 +79,8 @@ export default function QuestionList({
                       highlightClassName="highlighted-text"
                       searchWords={[searchField]}
                       autoEscape={true}
-                      textToHighlight={q["question"]}
-                      onClick={() => handleClickQuestion(q._id)}
+                      textToHighlight={q["question"] || ""}
+                      onClick={() => handleOpenQuestion(q._id)}
                     />
                     <UpdateIcon
                       onClick={() => handleGetLogs(q._id)}
@@ -90,29 +90,29 @@ export default function QuestionList({
                 </td>
                 <td
                   className="px-5 py-1 border border-slate-300 cursor-pointer"
-                  onClick={() => handleClickQuestion(q._id)}
+                  onClick={() => handleOpenQuestion(q._id)}
                 >
                   <Highlighter
                     highlightClassName="highlighted-text"
                     searchWords={[searchField]}
                     autoEscape={true}
-                    textToHighlight={q["answer"]}
+                    textToHighlight={q["answer"] || ""}
                   />
                 </td>
                 <td
                   className="px-5 py-1 border border-slate-300 cursor-pointer"
-                  onClick={() => handleClickQuestion(q._id)}
+                  onClick={() => handleOpenQuestion(q._id)}
                 >
                   <Highlighter
                     highlightClassName="highlighted-text"
                     searchWords={[searchField]}
                     autoEscape={true}
-                    textToHighlight={q["assignedTo"]}
+                    textToHighlight={q["assignedTo"] || ""}
                   />
                 </td>
                 <td
                   className="px-5 py-1 border border-slate-300 cursor-pointer"
-                  onClick={() => handleClickQuestion(q._id)}
+                  onClick={() => handleOpenQuestion(q._id)}
                 >
                   {q.properties && q.properties.length > 0
                     ? q.properties[0].split(",").map((p, i) => (
@@ -122,7 +122,7 @@ export default function QuestionList({
                             highlightClassName="highlighted-text"
                             searchWords={[searchField]}
                             autoEscape={true}
-                            textToHighlight={p}
+                            textToHighlight={p || ""}
                             className={`${
                               !p ? "none" : "bg-green-500"
                             } text-white p-1 rounded`}
