@@ -20,9 +20,7 @@ After installing dependencies:
 -     GOOGLE_CLIENT_SECRET
 -     SESSION_SECRET
 -     OPENAAI_KEY
-- import raw data to MongoDB:
--   mongoimport --uri  mongodb+srv://<user>:<password>@<cluster>/questify-ai-db  --collection  docs  --type CSV --headerline  --file  <raw data file location>
-- rename fields in new MongoDB collection, mapping below:
+- rename fields in raw data table, mapping below:
 -   Question: question
 -   Question Description: questionDesc
 -   Answer: answer,
@@ -33,5 +31,6 @@ After installing dependencies:
 -   Updated By: updatedBy,
 -   Assigned To: assignedTo,
 -   Properties: properties,
+- import raw data to MongoDB: mongoimport --uri  mongodb+srv://<user>:<password>@<cluster>/questify-ai-db --collection  docs  --type CSV --headerline  --file  <rawDataFileLocation>
 - launch server: node | nodemon server.js from root folder
 - launch client: npm start from client folder
