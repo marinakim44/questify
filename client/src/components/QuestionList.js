@@ -10,18 +10,11 @@ export default function QuestionList({
   handleOpenQuestion,
   handleGetLogs,
   handleFilter,
-  filtersApplied,
 }) {
   return (
-    <div>
-      <table className="mx-10 table-auto brder-collapse border border-slate-500 hover:border-collapse">
-        <thead
-          className="bg-slate-300"
-          style={{
-            position: "sticky",
-            top: selectedQuestions.length > 0 ? "340px" : "280px",
-          }}
-        >
+    <div className="overflow-x-auto">
+      <table className="mx-10 border-collapse border border-slate-500">
+        <thead className="bg-slate-300">
           <tr>
             <th className="border border-slate-300 py-3"></th>
             {questions &&
@@ -45,11 +38,6 @@ export default function QuestionList({
                     <p>{k}</p>
                     {k === "properties" || k === "assignedTo" ? (
                       <FilterListIcon />
-                    ) : (
-                      ""
-                    )}
-                    {filtersApplied.includes(k) ? (
-                      <p className="text-xs text-pink-500">(1)</p>
                     ) : (
                       ""
                     )}

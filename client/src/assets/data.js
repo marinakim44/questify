@@ -13,6 +13,6 @@ export const searchTypes = [
   },
   {
     name: "semantic",
-    label: "Semantic (beta)",
+    label: "Semantic (beta, 3 RPM)",
   },
 ];

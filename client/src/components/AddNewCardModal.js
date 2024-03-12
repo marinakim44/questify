@@ -7,6 +7,7 @@ import {
 import Select from "react-select";
 import CreatableSelect from "react-select/creatable";
 import makeAnimated from "react-select/animated";
+import { useWindowDimensions } from "../assets/customHooks";
 
 const animatedComponents = makeAnimated();
 
@@ -31,11 +32,15 @@ export default function AddNewCardModal({
   tag,
   updateTag,
 }) {
+  const { width } = useWindowDimensions();
+
   return (
     <Dialog
       open={open}
       handler={handleOpen}
-      className="bg-slate-200 z-10 w-1/2 max-w-screen-md min-w-96 mx-auto mt-72 p-10"
+      className={`bg-slate-200 z-10 ${
+        width < 500 ? "w-10/12" : "w-1/2"
+      } max-w-screen-md min-w-96 mx-auto mt-72 p-10`}
     >
       <h2 className="text-center font-bold text-lg mb-5">
         {openedQuestion ? "Update a question" : "Add a new question"}
@@ -218,7 +223,7 @@ export default function AddNewCardModal({
 
               {newTag ? (
                 <div className="flex flex-col">
-                  <div className="flex flex-row items-center">
+                  <div className="flex flex-col items-left">
                     <input
                       placeholder="key"
                       className="p-2 rounded"
@@ -272,10 +277,14 @@ export default function AddNewCardModal({
           </form>
         </Card>
       </DialogBody>
-      <DialogFooter className="mt-10">
+      <DialogFooter
+        className={`${
+          width > 500 ? "mt-10" : "flex flex-row justify-between"
+        } `}
+      >
         <button
           onClick={handleOpen}
-          className="p-3 bg-pink-500 text-white font-bold rounded w-1/5 mr-5"
+          className={`p-3 bg-slate-500 text-white font-bold rounded mr-5`}
         >
           Cancel
         </button>
@@ -285,7 +294,7 @@ export default function AddNewCardModal({
               ? () => handleUpdate(openedQuestion._id)
               : handleClick
           }
-          className="p-3 bg-green-500 text-white font-bold rounded w-1/5"
+          className="p-3 bg-green-500 text-white font-bold rounded"
         >
           Save
         </button>

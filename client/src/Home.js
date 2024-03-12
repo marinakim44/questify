@@ -141,7 +141,14 @@ export default function Home() {
     if (!newQuestion || !newQuestion?.question) {
       alert("Please specify a question");
     }
-    setDocs(docs.concat(newQuestion));
+    setDocs(
+      docs.concat(
+        Object.assign({}, newQuestion, {
+          createdBy: currentUserEmail,
+          createdAt: new Date(),
+        })
+      )
+    );
     dispatch(addQuestion(newQuestion));
 
     await saveQuestionToMongo(newQuestion, jwt);
@@ -256,13 +263,18 @@ export default function Home() {
     }
   };
 
+  const handleBulkDelegate = async () => {
+    handleOpenAssign();
+    setChecked([]);
+  };
+
   const handleGetLogs = async (id) => {
     console.log("Getting logs for question: ", id);
 
     alert(
       JSON.stringify(
-        Object.entries(docs.filter((d) => d._id === id)[0]).filter((e) =>
-          ["createdBy", "createdAt", "updatedBy", "updatedAt"].includes(e[0])
+        Object.entries(docs.filter((d) => d._id === id)?.[0]).filter((e) =>
+          ["createdBy", "createdAt", "updatedBy", "updatedAt"].includes(e?.[0])
         )
       )
     );
@@ -275,8 +287,8 @@ export default function Home() {
   const addTag = () => {
     let newTagToAdd = `${tag.key}:${tag.value}`;
     let existingTags = openedQuestion?.properties
-      ? openedQuestion.properties[0]
-      : newQuestion?.properties[0];
+      ? openedQuestion.properties?.[0]
+      : newQuestion?.properties?.[0];
     let newTagsList = existingTags
       ? existingTags + `,${newTagToAdd}`
       : newTagToAdd;
@@ -292,7 +304,6 @@ export default function Home() {
   // FILTERS
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [isFilterApplied, setIsFilterApplied] = useState(false);
-  const [filtersApplied, setFiltersApplied] = useState([]);
   const [filterType, setFilterType] = useState("");
   const [filterField, setFilterField] = useState();
 
@@ -322,12 +333,9 @@ export default function Home() {
   };
 
   const resetFilter = async () => {
-    const res = await getQuestionsFromMongo(jwt);
-    setDocs(res);
-
+    setDocs(initialStateDocs);
     setIsFilterOpen(false);
     setIsFilterApplied(false);
-    setFiltersApplied([]);
   };
 
   const getSimpleSearchResults = () => {
@@ -364,6 +372,17 @@ export default function Home() {
     setDocs(initialStateDocs);
   };
 
+  const refresh = async () => {
+    getQuestionsFromMongo(jwt)
+      .then((res) => {
+        setDocs(res);
+        dispatch(setQuestions(res));
+        setChecked([]);
+        setSearchField("");
+      })
+      .catch((err) => console.log(err));
+  };
+
   return jwt ? (
     <div>
       {isToastOpen && (
@@ -380,7 +399,7 @@ export default function Home() {
               clear={resetResults}
               handleSearch={handleSearchMain}
             />
-            <div className="flex gap-10">
+            <div className="flex gap-3">
               {searchTypes.map((t, i) => {
                 return (
                   <div
@@ -391,18 +410,18 @@ export default function Home() {
                       onChange={() => setSearchType(t.name)}
                       checked={searchType === t.name}
                     />
-                    <p className="text-slate-300">{t.label}</p>
+                    <p className="text-slate-300 text-sm">{t.label}</p>
                   </div>
                 );
               })}
             </div>
           </div>
-          <div className="w-1/2 flex flex-row justify-end">
+          <div className="flex flex-row justify-end ml-3">
             <button
               onClick={handleOpen}
-              className="p-3 bg-green-500 text-white font-bold rounded w-1/4 flex flex-row items-center justify-center"
+              className="p-3 bg-green-500 text-white font-bold rounded flex flex-row items-center justify-center"
             >
-              <AddIcon fontSize="medium" />
+              <AddIcon />
               <p>Add Question</p>
             </button>
           </div>
@@ -434,9 +453,15 @@ export default function Home() {
         )}
 
         <div className="flex flex-row h-14 items-center justify-between bg-white">
-          <div>
-            <h2 className="ml-10 mr-1 italic font-bold">
-              {docs.length} questions
+          <div className="flex flex-row">
+            <h2 className="ml-10 mr-1 italic">
+              <span className="font-bold">{docs.length} questions </span>|{" "}
+              <span
+                className="underline hover:cursor-pointer text-slate-500"
+                onClick={refresh}
+              >
+                Refresh
+              </span>
             </h2>
 
             {checked.length > 0 ? (
@@ -472,6 +497,7 @@ export default function Home() {
           users={users}
           setBulkAssignTo={setBulkAssignTo}
           handleBulkAssign={handleBulkAssign}
+          handleBulkDelegate={handleBulkDelegate}
           bulkAssignTo={bulkAssignTo}
           docs={docs}
           checked={checked}
@@ -491,7 +517,7 @@ export default function Home() {
                 })
               : removeDups(
                   docs
-                    .map((d) => d.properties[0])
+                    .map((d) => d.properties?.[0])
                     .join()
                     .split(",")
                 ).map((p) => {
@@ -516,7 +542,7 @@ export default function Home() {
           companies={removeDups(docs.map((d) => d.companyName))}
           properties={removeDups(
             docs
-              .map((d) => d.properties[0])
+              .map((d) => d.properties?.[0])
               .join()
               .split(",")
           ).map((p) => {
@@ -538,7 +564,6 @@ export default function Home() {
         handleOpenQuestion={handleOpenQuestion}
         handleGetLogs={handleGetLogs}
         handleFilter={handleFilter}
-        filtersApplied={filtersApplied}
       />
     </div>
   ) : (

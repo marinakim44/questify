@@ -8,6 +8,7 @@ export default function DialogAction({
   users,
   setBulkAssignTo,
   handleBulkAssign,
+  handleBulkDelegate,
   bulkAssignTo,
   docs,
   checked,
@@ -35,20 +36,20 @@ export default function DialogAction({
       <DialogFooter className="mt-5">
         <button
           onClick={handleOpenAssign}
-          className="p-3 bg-pink-500 text-white font-bold rounded w-1/5 mr-5"
+          className="p-3 bg-slate-500 text-white font-bold rounded mr-5"
         >
           Cancel
         </button>
         {dialogType === "assign" ? (
           <button
             onClick={handleBulkAssign}
-            className="p-3 bg-green-500 text-white font-bold rounded w-1/5"
+            className="p-3 bg-green-500 text-white font-bold rounded"
           >
             Assign
           </button>
         ) : (
           <button
-            onClick={handleBulkAssign}
+            onClick={handleBulkDelegate}
             className="p-3 bg-green-500 text-white font-bold rounded w-1/5"
           >
             <a

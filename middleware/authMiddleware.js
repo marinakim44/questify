@@ -2,6 +2,10 @@ const jwt = require("jsonwebtoken");
 const asyncHandler = require("express-async-handler");
 const User = require("../models/userModel");
 
+// decided to do google authentication to make it simple for the user
+// in addition to jwt for improved security
+// protecting every route with assumption data are confidential
+
 const protect = asyncHandler(async (req, res, next) => {
   let token;
 

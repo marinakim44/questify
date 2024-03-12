@@ -33,14 +33,14 @@ export default function Filter({
       <DialogFooter className="mt-5">
         <button
           onClick={handler}
-          className="p-3 bg-pink-500 text-white font-bold rounded w-1/5 mr-5"
+          className="p-3 bg-slate-500 text-white font-bold rounded mr-5"
         >
           Cancel
         </button>
 
         <button
           onClick={apply}
-          className="p-3 bg-green-500 text-white font-bold rounded w-1/5"
+          className="p-3 bg-green-500 text-white font-bold rounded"
         >
           Apply
         </button>

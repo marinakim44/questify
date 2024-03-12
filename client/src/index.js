@@ -25,6 +25,7 @@ const router = createBrowserRouter([
   },
 ]);
 
+// decided to implement redux store for easier state management
 createRoot(document.getElementById("root")).render(
   <React.StrictMode>
     <Provider store={store}>

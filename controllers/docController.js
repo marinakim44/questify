@@ -3,6 +3,9 @@ const axios = require("axios");
 const asyncHandler = require("express-async-handler");
 const OPENAI_KEY = process.env.OPENAI_KEY;
 const MONGODB_URI = process.env.MONGODB_URI;
+
+// had to use native mongodb driver to use vector search
+
 const MongoClient = require("mongodb").MongoClient;
 
 const Doc = require("../models/docModel");
@@ -73,8 +76,9 @@ const deleteDoc = asyncHandler(async (req, res) => {
 
 async function getEmbedding(query) {
   const url = "https://api.openai.com/v1/embeddings";
-  // const openai_key = "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";
 
+  // chose this model for speed, performance and i quote
+  // "text-embedding-ada-002 is a new embedding model from OpenAI that replaces five separate models for text search, text similarity, and code search"
   let response = await axios.post(
     url,
     {
@@ -97,13 +101,10 @@ async function getEmbedding(query) {
 }
 
 async function findSimilarDocuments(embedding) {
-  // const url =
-  //   "mongodb+srv://marinakim44:ILbOlsHyCzaibioD@questify-mk-cluster.vuyg1jf.mongodb.net/questify-ai-db";
-
   const client = new MongoClient(MONGODB_URI);
   try {
     await client.connect();
-    const db = client.db("questify-ai-db"); // Replace with your database name.
+    const db = client.db("questify-ai-db");
     const collection = db.collection("docs");
 
     const documents = await collection
