@@ -1,3 +1,5 @@
+// search bar is designed to be intuitive, press Escape to reset the list of questions
+
 export default function SearchBar({
   searchChange,
   searchValue,
