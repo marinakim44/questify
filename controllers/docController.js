@@ -141,7 +141,6 @@ const getSemanticResults = asyncHandler(async (req, res) => {
   const query = req.body.searchValue;
 
   const foundDocuments = await main(query);
-  console.log("found documents: ", foundDocuments);
 
   if (!foundDocuments) {
     res.status(400);
