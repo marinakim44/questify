@@ -160,21 +160,9 @@ export default function Home() {
 
   const updateQuestion = async (id) => {
     if (openedQuestion && !openedQuestion.question) {
-      setAction("alert");
-      setIsToastOpen(true);
-    }
-    setDocs(
-      docs.map((d) =>
-        d._id === id
-          ? Object.assign({}, openedQuestion, {
-              updatedBy: currentUserEmail,
-              updatedAt: new Date(),
-            })
-          : d
-      )
-    );
-    dispatch(
-      setQuestions(
+      alert("Please soecify a question");
+    } else {
+      setDocs(
         docs.map((d) =>
           d._id === id
             ? Object.assign({}, openedQuestion, {
@@ -183,13 +171,25 @@ export default function Home() {
               })
             : d
         )
-      )
-    );
+      );
+      dispatch(
+        setQuestions(
+          docs.map((d) =>
+            d._id === id
+              ? Object.assign({}, openedQuestion, {
+                  updatedBy: currentUserEmail,
+                  updatedAt: new Date(),
+                })
+              : d
+          )
+        )
+      );
 
-    await updateQuestionInMongo(id, openedQuestion, jwt);
+      await updateQuestionInMongo(id, openedQuestion, jwt);
 
-    setOpenedQuestion();
-    handleOpen();
+      setOpenedQuestion();
+      handleOpen();
+    }
   };
 
   const handleClickCheckbox = (e) => {
