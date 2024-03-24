@@ -18,18 +18,6 @@ const loginUser = async (req, res) => {
     });
     const payload = ticket.getPayload();
 
-    // if (
-    //   ![
-    //     "marina.kim.mk90@gmail.com",
-    //     "marinamuse4490@gmail.com",
-    //     "mkim@rcgroup.online",
-    //   ].includes(payload.email)
-    // ) {
-    //   return res
-    //     .status(401)
-    //     .json({ message: "You are not authorized to view this page" });
-    // }
-
     let user = await User.findOneAndUpdate(
       { email: payload.email },
       { email: payload.email, name: payload.name, img: payload.picture },
